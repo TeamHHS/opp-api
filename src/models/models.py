@@ -1,5 +1,7 @@
 from db.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Enum
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
 
 class Users(Base):
@@ -24,6 +26,19 @@ class Todos(Base):
     priority = Column(Integer)
     complete = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey("users.id"))
+
+class Cards(Base):
+    __tablename__ = 'cards'
+
+    id = Column(Integer, primary_key=True, index=True)
+    card_type = Column(String, nullable=False)
+    card_number = Column(Integer, nullable=False)
+    expiration_month = Column(Integer, nullable=False)
+    expiration_year = Column(Integer, nullable=False)
+    cvv = Column(Integer, nullable=False)
+    balance = Column(Float, default=100)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
 
 
 class GenericObject(Base):

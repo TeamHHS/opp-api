@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 from routers.auth import get_current_user
 from routers.helpers import check_user_authentication
 
-from models.models import Todos
+from models.models import Todos, Cards
 from db.database import SessionLocal
 
-router = APIRouter()
+router = APIRouter(prefix='/todo', tags=['todo'])
 
 
 def get_db():
@@ -97,3 +97,5 @@ async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = P
 
     db.commit()
 
+
+#Cards
