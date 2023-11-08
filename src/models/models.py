@@ -18,47 +18,23 @@ class Users(Base):
     role = Column(String)
     phone_number = Column(String)
 
-class Todos(Base):
-    __tablename__ = 'todos'
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    description = Column(String)
-    priority = Column(Integer)
-    complete = Column(Boolean, default=False)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-
 class Cards(Base):
     __tablename__ = 'cards'
 
-    id = Column(Integer, primary_key=True, index=True)
     card_type = Column(String, nullable=False)
-    card_number = Column(Integer, nullable=False)
+    card_number = Column(Integer, nullable=False, primary_key=True, index=True)
     expiration_month = Column(Integer, nullable=False)
     expiration_year = Column(Integer, nullable=False)
     cvv = Column(Integer, nullable=False)
     balance = Column(Float, default=100)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-class Transactions(Base):
-    __tablename__ = 'transactions'
+class Payments(Base):
+    __tablename__ = 'payments'
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    card = Column(Integer, nullable=False)
     transaction_date = Column(DateTime(timezone=True), server_default=func.now())
-    pending = Column(Boolean, nullable=False)
-    amount = Column(Integer, nullable=False)
-
-class GenericObject(Base):
-    __tablename__ = 'generics'
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    price = Column(Float)
-
-
-
-
-
-
-
+    complete = Column(Boolean, nullable=False)
+    amount = Column(Float, nullable=False)

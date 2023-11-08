@@ -1,4 +1,12 @@
-# Card number for testing: 4532015112830366
+# Card number for testing
+{
+  "card_type": "debit",
+  "card_number": 4532015112830366,
+  "expiration_month": 12,
+  "expiration_year": 2026,
+  "cvv": 126,
+  "balance": 0
+}
 
 from typing import Annotated
 
@@ -31,7 +39,7 @@ user_dependency = Annotated[dict, (Depends(get_current_user))]
 
 class CardsRequest(BaseModel):
     card_type: str
-    card_number: int
+    card_number: int = Field(gt=999999999999999, lt=10000000000000000)
     expiration_month: int = Field(gt=0, lt=13)
     expiration_year: int = Field(gt=2023, lt=2033)
     cvv: int = Field(gt=99, lt=1000)
@@ -43,12 +51,12 @@ async def read_all(user: user_dependency, db: db_dependency):
     return db.query(Cards).filter(Cards.owner_id == user.get('id')).all()
 
 
-@router.get("/{card_id}", status_code=status.HTTP_200_OK)
-async def read_card(user: user_dependency, db: db_dependency, card_id: int = Path(gt=0)):
+@router.get("/{card_number}", status_code=status.HTTP_200_OK)
+async def read_card(user: user_dependency, db: db_dependency, card_number: int):
     check_user_authentication(user)
 
     card_model = (
-        db.query(Cards).filter(Cards.id == card_id).filter(Cards.owner_id == user.get('id')).first()
+        db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
     )
 
     if card_model is not None:
@@ -61,6 +69,12 @@ async def create_card(user: user_dependency, db: db_dependency, card_request: Ca
     # Ensure user authentication
     check_user_authentication(user)
 
+    # Check if a card with the same card number already exists
+    existing_card = db.query(Cards).filter(Cards.card_number == card_request.card_number).filter(Cards.owner_id == user.get('id')).first()
+
+    if existing_card:
+        raise HTTPException(status_code=400, detail="Card with the same number already exists")
+
     card_model = Cards(**card_request.model_dump(), owner_id=user.get('id'))
 
     if not isValidType(card_model.card_type):
@@ -72,21 +86,20 @@ async def create_card(user: user_dependency, db: db_dependency, card_request: Ca
     db.commit()
 
 
-@router.put("/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.put("/{card_number}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_card(user: user_dependency, db: db_dependency,
                       card_request: CardsRequest,
-                      card_id: int = Path(gt=0)):
+                      card_number: int):
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.id == card_id).filter(Cards.owner_id == user.get('id')).first()
+    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
 
     if card_model is None:  # Fix the variable name here
         raise HTTPException(status_code=404, detail="Card not found")
 
     # Update the card
     card_model.card_type = card_request.card_type
-    card_model.card_number = card_request.card_number
     card_model.expiration_month = card_request.expiration_month
     card_model.expiration_year = card_request.expiration_year
     card_model.cvv = card_request.cvv
@@ -101,17 +114,17 @@ async def update_card(user: user_dependency, db: db_dependency,
     db.commit()
 
 
-@router.delete("/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_card(user: user_dependency, db: db_dependency, card_id: int = Path(gt=0)):
+@router.delete("/{card_number}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_card(user: user_dependency, db: db_dependency, card_number: int):
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.id == card_id).filter(Cards.owner_id == user.get('id')).first()
+    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
 
     if card_model is None:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    db.query(Cards).filter(Cards.id == card_id).filter(Cards.owner_id == user.get('id')).delete()
+    db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).delete()
 
     db.commit()
 
@@ -123,7 +136,7 @@ async def isValidType(input):
 async def isValidNum(num):
     # Convert the integer to a string
     num_str = str(num)
-    if len(num_str) < 13 or len(num_str) > 19:
+    if len(num_str) != 16:
         return False
 
     # Reverse the string and convert it back to an integer
@@ -132,7 +145,6 @@ async def isValidNum(num):
     # Implement the Luhn algorithm
     total = 0
     double_digit = False
-
     for digit in str(reversed_num):
         if double_digit:
             doubled = int(digit) * 2
