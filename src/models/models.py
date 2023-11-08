@@ -1,7 +1,8 @@
 from db.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Enum
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Enum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
 
 
 class Users(Base):
@@ -39,7 +40,14 @@ class Cards(Base):
     balance = Column(Float, default=100)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
+class Transactions(Base):
+    __tablename__ = 'transactions'
 
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    transaction_date = Column(DateTime(timezone=True), server_default=func.now())
+    pending = Column(Boolean, nullable=False)
+    amount = Column(Integer, nullable=False)
 
 class GenericObject(Base):
     __tablename__ = 'generics'
