@@ -1,3 +1,5 @@
+#format for timestamp: 2023-11-09T10:40:52Z
+
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -8,6 +10,9 @@ from models.models import Payments
 from db.database import SessionLocal
 from routers.auth import get_current_user
 from routers.helpers import check_user_authentication
+from routers.payment import update_payment_status
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy import func
 
 router = APIRouter(prefix='/transaction', tags=['transaction'])
 
@@ -31,16 +36,21 @@ class PaymentsResponse(BaseModel):
 async def get_total_balance(user: user_dependency, db: db_dependency):
     try:
         check_user_authentication(user)
+        update_payment_status(user, db)
         
         # Calculate total balance of fully processed funds
-        total_balance = db.query(Payments).filter(
+        total_balance = db.query(func.sum(Payments.amount)).filter(
             Payments.owner_id == user.get('id'),
             Payments.complete == True
-        ).with_entities(Payments.amount).scalar() or 0.0
+        ).scalar() or 0.0
         
         return total_balance
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except MultipleResultsFound as e:
+        print("Multiple rows found:", e)
+        return None
+    except NoResultFound as e:
+        print("No rows found:", e)
+        return None
 
 @router.get("/total-balance/{start_date}/{end_date}", response_model=float)
 async def get_total_balance_period(
@@ -51,22 +61,28 @@ async def get_total_balance_period(
 ):
     try:
         check_user_authentication(user)
+        update_payment_status(user, db)
         
-        # Calculate total balance of fully processed funds for a certain time period
-        total_balance_period = db.query(Payments).filter(
+        # Calculate total balance of fully processed funds
+        total_balance = db.query(func.sum(Payments.amount)).filter(
             Payments.owner_id == user.get('id'),
             Payments.complete == True,
-            Payments.transaction_date.between(start_date, end_date)
-        ).with_entities(Payments.amount).scalar() or 0.0
+            Payments.payment_date.between(start_date, end_date)
+        ).scalar() or 0.0
         
-        return total_balance_period
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return total_balance
+    except MultipleResultsFound as e:
+        print("Multiple rows found:", e)
+        return None
+    except NoResultFound as e:
+        print("No rows found:", e)
+        return None
 
 @router.get("/all-transactions", response_model=List[PaymentsResponse])
 async def get_all_transactions(user: user_dependency, db: db_dependency):
     try:
         check_user_authentication(user)
+        update_payment_status(user, db)
         
         # Get a list of all transactions that comprise the total balance
         all_transactions = db.query(Payments).filter(
@@ -93,6 +109,7 @@ async def get_all_transactions(user: user_dependency, db: db_dependency):
 async def get_accounts_receivables(user: user_dependency, db: db_dependency):
     try:
         check_user_authentication(user)
+        update_payment_status(user, db)
         
         # Get a list of all accounts receivables (pending purchases)
         accounts_receivables = db.query(Payments).filter(

@@ -35,7 +35,8 @@ class Payments(Base):
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     card = Column(Integer, nullable=False)
-    transaction_date = Column(DateTime(timezone=True), server_default=func.now())
+    card_type = Column(String, nullable=False)
+    payment_date = Column(DateTime(timezone=True), server_default=func.now())
     complete = Column(Boolean, nullable=False)
     amount = Column(Float, nullable=False)
 

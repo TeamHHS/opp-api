@@ -5,6 +5,24 @@
   "expiration_month": 12,
   "expiration_year": 2026,
   "cvv": 126,
+  "balance": 5
+}
+
+{
+  "card_type": "credit",
+  "card_number": 5555555555554444,
+  "expiration_month": 12,
+  "expiration_year": 2026,
+  "cvv": 126,
+  "balance": 0
+}
+
+{
+  "card_type": "credit",
+  "card_number": 4111111111111111,
+  "expiration_month": 12,
+  "expiration_year": 2022,
+  "cvv": 126,
   "balance": 0
 }
 
@@ -14,12 +32,15 @@ from fastapi import APIRouter, Depends, Path, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from routers.auth import get_current_user
 from routers.helpers import check_user_authentication
 
 from models.models import Cards
 from db.database import SessionLocal
+
+from datetime import datetime
 
 router = APIRouter(prefix='/card', tags=['card'])
 
@@ -109,6 +130,8 @@ async def update_card(user: user_dependency, db: db_dependency,
         raise HTTPException(status_code=400, detail="Invalid Card Type")
     elif not isValidNum(card_model.card_number):
         raise HTTPException(status_code=400, detail="Invalid Card Number")
+    elif isExpired(card_model.expiration_month, card_model.expiration_year):
+        raise HTTPException(status_code=400, detail="Expired Card")
     else:
         db.add(card_model)
     db.commit()
@@ -129,11 +152,11 @@ async def delete_card(user: user_dependency, db: db_dependency, card_number: int
     db.commit()
 
 # Ensure card type is valid
-async def isValidType(input):
+def isValidType(input):
     return input.lower() in ('debit', 'credit')
 
 # Ensure card number is valid via Luhn Algorithm
-async def isValidNum(num):
+def isValidNum(num):
     # Convert the integer to a string
     num_str = str(num)
     if len(num_str) != 16:
@@ -154,3 +177,11 @@ async def isValidNum(num):
         double_digit = not double_digit
 
     return total % 10 == 0
+
+def isExpired(expiration_month, expiration_year):
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    if expiration_year < current_month:
+        return True
+    if expiration_year == current_year and expiration_month <= current_month:
+        return True
