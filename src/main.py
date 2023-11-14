@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+import sys
+sys.path.append('/Users/sbt/Desktop/CS5500/opp-api/src')
 
 from models import models
 from db.database import engine
