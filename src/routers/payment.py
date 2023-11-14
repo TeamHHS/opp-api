@@ -112,7 +112,7 @@ def update_payment_status(user: user_dependency, db: db_dependency):
         if payment_model and payment_model.card_type == 'credit':
             current_db_time = db.query(func.now()).scalar()
 
-            if current_db_time > payment_model.payment_date + timedelta(seconds=20):
+            if current_db_time > payment_model.payment_date + timedelta(days=2):
                 payment_model.complete = True
                 db.add(payment_model)
     db.commit()
