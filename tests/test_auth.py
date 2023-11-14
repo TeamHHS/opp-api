@@ -39,8 +39,9 @@ def test_create_user():
         "role": "user"
     }
     try:
-        response = client.post("/auth/", json=data)
-        assert response.status_code == 201
+        assert client.post("/auth/", json=data).status_code == 201
+
+    # If user is already created
     except sqlalchemy.exc.IntegrityError:
         pass
 
@@ -54,6 +55,35 @@ def test_login_for_access_token():
     assert "access_token" in response.json()
     assert "token_type" in response.json()
 
+def test_failed_login_for_access_token():
+    login_data = {
+        "username": "testuser",
+        "password": "a"
+    }
+    response = client.post("/auth/token/", data=login_data)
+    assert response.status_code == 401
+
+def test_get_current_user():
+    # Obtain the authentication token
+    token_data = {
+        "username": "testuser",
+        "password": "testpassword"
+    }
+    token_response = client.post("/auth/token/", data=token_data)
+    token = token_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/auth/", headers=headers)
+    assert response.status_code == 200
+    response_data = response.json()
+    assert "username" in response_data
+    assert "user_role" in response_data
+
+def test_get_current_user_invalid_token():
+    invalid_token = 'token'
+    response = client.get("/", headers={"Authorization": f"Bearer {invalid_token}"})
+    assert response.status_code == 404
+    response_data = response.json()
+    assert response_data["detail"] == "Not Found"
 
 if __name__ == '__main__':
     unittest.main()
