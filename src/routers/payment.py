@@ -32,7 +32,7 @@ from routers.card import isValidType, isValidNum, isExpired
 from models.models import Payments, Cards
 from db.database import SessionLocal
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 router = APIRouter(prefix='/payment', tags=['payment'])
 
@@ -53,7 +53,7 @@ user_dependency = Annotated[dict, (Depends(get_current_user))]
 class PaymentRequest(BaseModel):
     card_number: int = Field(gt=999999999999999, lt=10000000000000000)
     expiration_month: int = Field(gt=0, lt=13)
-    expiration_year: int = Field(gt=2023, lt=2033)
+    expiration_year: int = Field(gt=2022, lt=2033)
     cvv: int = Field(gt=99, lt=1000)
     card_type: str
     amount: float
@@ -69,19 +69,19 @@ async def read_all(user: user_dependency, db: db_dependency):
 async def process_payment(user: user_dependency, db: db_dependency, payment_request: PaymentRequest):
     check_user_authentication(user)
 
+    if not isValidNum(payment_request.card_number):
+        raise HTTPException(status_code=400, detail="Invalid Card Number")
+    elif not isValidType(payment_request.card_type):
+        raise HTTPException(status_code=400, detail="Invalid Card Type")
+    elif isExpired(payment_request.expiration_month, payment_request.expiration_year):
+        raise HTTPException(status_code=400, detail="Expired Card")
+
     card_model = (
         db.query(Cards).filter(Cards.card_number == payment_request.card_number).filter(Cards.owner_id == user.get('id')).first()
     )
 
     if card_model is None:
         raise HTTPException(status_code=404, detail="Card not found")
-    
-    if not isValidType(card_model.card_type):
-        raise HTTPException(status_code=400, detail="Invalid Card Type")
-    elif not isValidNum(card_model.card_number):
-        raise HTTPException(status_code=400, detail="Invalid Card Number")
-    elif isExpired(card_model.expiration_month, card_model.expiration_year):
-        raise HTTPException(status_code=400, detail="Expired Card")
 
     if card_model.expiration_month != payment_request.expiration_month or \
         card_model.expiration_year != payment_request.expiration_year or \
@@ -115,4 +115,19 @@ def update_payment_status(user: user_dependency, db: db_dependency):
             if current_db_time > payment_model.payment_date + timedelta(days=2):
                 payment_model.complete = True
                 db.add(payment_model)
+    db.commit()
+
+# for test purpose only
+def create_test_payment():
+    db = SessionLocal()
+    payment_model = Payments(
+        card=4532015112830366,
+        card_type="credit",
+        amount=0.5,
+        complete=False,
+        owner_id=None,
+        payment_date=datetime.now() - timedelta(days=3)
+    )
+
+    db.add(payment_model)
     db.commit()
