@@ -69,7 +69,7 @@ class CardsRequest(BaseModel):
 @router.get("/read-all")
 async def read_all(user: user_dependency, db: db_dependency):
     check_user_authentication(user)
-    return db.query(Cards).filter(Cards.owner_id == user.get('id')).all()
+    return db.query(Cards).filter(Cards.owner_id == user.get('user_id')).all()
 
 
 @router.get("/{card_number}", status_code=status.HTTP_200_OK)
@@ -77,7 +77,7 @@ async def read_card(user: user_dependency, db: db_dependency, card_number: int):
     check_user_authentication(user)
 
     card_model = (
-        db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
+        db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
     )
 
     if card_model is not None:
@@ -91,12 +91,12 @@ async def create_card(user: user_dependency, db: db_dependency, card_request: Ca
     check_user_authentication(user)
 
     # Check if a card with the same card number already exists
-    existing_card = db.query(Cards).filter(Cards.card_number == card_request.card_number).filter(Cards.owner_id == user.get('id')).first()
+    existing_card = db.query(Cards).filter(Cards.card_number == card_request.card_number).filter(Cards.owner_id == user.get('user_id')).first()
 
     if existing_card:
         raise HTTPException(status_code=400, detail="Card with the same number already exists")
 
-    card_model = Cards(**card_request.model_dump(), owner_id=user.get('id'))
+    card_model = Cards(**card_request.model_dump(), owner_id=user.get('user_id'))
 
     if not isValidType(card_model.card_type):
         raise HTTPException(status_code=400, detail="Invalid Card Type")
@@ -114,7 +114,7 @@ async def update_card(user: user_dependency, db: db_dependency,
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
+    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
 
     if card_model is None:  # Fix the variable name here
         raise HTTPException(status_code=404, detail="Card not found")
@@ -142,12 +142,12 @@ async def delete_card(user: user_dependency, db: db_dependency, card_number: int
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).first()
+    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
 
     if card_model is None:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('id')).delete()
+    db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).delete()
 
     db.commit()
 

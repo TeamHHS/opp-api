@@ -3,7 +3,7 @@ sys.path.append('../src')
 import unittest
 from datetime import timedelta, datetime
 from fastapi.testclient import TestClient
-from routers.payment import create_test_payment
+from src.routers.payment import create_test_payment
 import pytest
 from src.main import app
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,7 +12,7 @@ from passlib.context import CryptContext
 from src.db.database import SessionLocal
 from typing import Annotated, Any
 from sqlalchemy.orm import Session
-from src.routers.auth import create_access_token, get_current_user
+from src.routers.auth import create_access_token
 import sqlalchemy
 
 client = TestClient(app)
@@ -22,16 +22,6 @@ ALGORITHM = 'HS256'
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependency = Annotated[Session, Depends(get_db)]
 
 @pytest.fixture(autouse=True)
 def before_each():
@@ -58,7 +48,7 @@ def before_each():
 
 def get_test_token():
     test_username = "testuser"
-    return create_access_token(test_username, 1, "user", timedelta(minutes=30))
+    return create_access_token(test_username, 1, 'user', timedelta(minutes=30))
 
 def test_process_payment():
     token = get_test_token()
@@ -69,7 +59,7 @@ def test_process_payment():
         "expiration_month": 12,
         "expiration_year": 2026,
         "cvv": 126,
-        "amount": 0.5 
+        "amount": 0.5
     }
     # happy path
     assert client.post("/payment/", json=data, headers=headers).status_code == 202
@@ -91,7 +81,7 @@ def test_process_payment():
         "expiration_month": 12,
         "expiration_year": 2026,
         "cvv": 126,
-        "amount": 0.5 
+        "amount": 0.5
     }
     assert client.post("/payment/", json=data_invalid_type, headers=headers).status_code == 400
 
@@ -101,7 +91,7 @@ def test_process_payment():
         "expiration_month": 12,
         "expiration_year": 2026,
         "cvv": 126,
-        "amount": 0.5 
+        "amount": 0.5
     }
     assert client.post("/payment/", json=data_invalid_num, headers=headers).status_code == 400
 
@@ -153,7 +143,3 @@ def test_read_all():
 
     response = client.get("/payment/read-all", headers=headers)
     assert response.status_code == 200
-
-
-if __name__ == '__main__':
-    unittest.main()

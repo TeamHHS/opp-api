@@ -14,7 +14,7 @@ def create_test_transaction(db):
         "card": 1234567890123456,
         "amount": 50.0,
         "complete": True,
-        "owner_id": 1,
+        "owner_id": 2,
         "card_type": "debit"
     }
     transaction = Payments(**transaction_data)
@@ -25,7 +25,7 @@ def create_test_transaction(db):
 
 def get_test_token():
     test_username = "testuser"
-    return create_access_token(test_username, 1, "user", timedelta(minutes=30))
+    return create_access_token(test_username, 2, "user", timedelta(minutes=30))
 
 def test_get_total_balance():
     # Obtain a valid token

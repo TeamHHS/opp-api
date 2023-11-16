@@ -62,7 +62,7 @@ class PaymentRequest(BaseModel):
 async def read_all(user: user_dependency, db: db_dependency):
     check_user_authentication(user)
     update_payment_status(user, db)
-    return db.query(Payments).filter(Payments.owner_id == user.get('id')).all()
+    return db.query(Payments).filter(Payments.owner_id == user.get('user_id')).all()
 
 # Assumption is that UI make appropriate request after checking card type and card validity
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
@@ -77,7 +77,7 @@ async def process_payment(user: user_dependency, db: db_dependency, payment_requ
         raise HTTPException(status_code=400, detail="Expired Card")
 
     card_model = (
-        db.query(Cards).filter(Cards.card_number == payment_request.card_number).filter(Cards.owner_id == user.get('id')).first()
+        db.query(Cards).filter(Cards.card_number == payment_request.card_number).filter(Cards.owner_id == user.get('user_id')).first()
     )
 
     if card_model is None:
@@ -101,14 +101,14 @@ async def process_payment(user: user_dependency, db: db_dependency, payment_requ
                              card_type=card_model.card_type, 
                              amount=payment_request.amount, 
                              complete=complete_status, 
-                             owner_id=user.get("id"))
+                             owner_id=user.get("user_id"))
 
     db.add(card_model)
     db.add(payment_model)
     db.commit()
 
 def update_payment_status(user: user_dependency, db: db_dependency):
-    for payment_model in db.query(Payments).filter(Payments.owner_id == user.get('id')).all():
+    for payment_model in db.query(Payments).filter(Payments.owner_id == user.get('user_id')).all():
         if payment_model and payment_model.card_type == 'credit':
             current_db_time = db.query(func.now()).scalar()
 
@@ -125,8 +125,8 @@ def create_test_payment():
         card_type="credit",
         amount=0.5,
         complete=False,
-        owner_id=None,
-        payment_date=datetime.now() - timedelta(days=3)
+        owner_id=1,
+        payment_date=datetime.now() - timedelta(days=3),
     )
 
     db.add(payment_model)

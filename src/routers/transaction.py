@@ -40,7 +40,7 @@ async def get_total_balance(user: user_dependency, db: db_dependency):
         
         # Calculate total balance of fully processed funds
         total_balance = db.query(func.sum(Payments.amount)).filter(
-            Payments.owner_id == user.get('id'),
+            Payments.owner_id == user.get('user_id'),
             Payments.complete == True
         ).scalar() or 0.0
         
@@ -65,7 +65,7 @@ async def get_total_balance_period(
         
         # Calculate total balance of fully processed funds
         total_balance = db.query(func.sum(Payments.amount)).filter(
-            Payments.owner_id == user.get('id'),
+            Payments.owner_id == user.get('user_id'),
             Payments.complete == True,
             Payments.payment_date.between(start_date, end_date)
         ).scalar() or 0.0
@@ -86,7 +86,7 @@ async def get_all_transactions(user: user_dependency, db: db_dependency):
         
         # Get a list of all transactions that comprise the total balance
         all_transactions = db.query(Payments).filter(
-            Payments.owner_id == user.get('id'),
+            Payments.owner_id == user.get('user_id'),
             Payments.complete == True
         ).all()
         
@@ -113,7 +113,7 @@ async def get_accounts_receivables(user: user_dependency, db: db_dependency):
         
         # Get a list of all accounts receivables (pending purchases)
         accounts_receivables = db.query(Payments).filter(
-            Payments.owner_id == user.get('id'),
+            Payments.owner_id == user.get('user_id'),
             Payments.complete == False
         ).all()
         

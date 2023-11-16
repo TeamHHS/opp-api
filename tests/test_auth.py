@@ -8,7 +8,6 @@ from passlib.context import CryptContext
 from src.db.database import SessionLocal
 from typing import Annotated, Any
 from sqlalchemy.orm import Session
-from src.routers.auth import create_access_token, get_current_user
 import sqlalchemy
 
 client = TestClient(app)
