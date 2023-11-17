@@ -11,5 +11,5 @@
 
 ## PM3
 * The API call using curl is successful as shown below:
-![Screenshot](API Call.png)  
+![Screenshot](API_call.png)  
 * All tests for ReST APIs are included in tests folder
