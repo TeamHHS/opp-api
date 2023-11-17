@@ -8,3 +8,8 @@
 * For database, we use Sqlite3 for our project. More details are included in src/db/database.py
 * For WSGI, we use Univorn as shown below:
 ![Screenshot](Uvicorn.png)
+
+## PM3
+* The API call using curl is successful as shown below:
+![Screenshot](API Call.png)  
+* All tests for ReST APIs are included in tests folder
