@@ -13,3 +13,16 @@
 * The API call using curl is successful as shown below:
 ![Screenshot](API_call.png)  
 * All tests for ReST APIs are included in tests folder
+
+## PM4A
+* Build the Docker image:
+```
+docker build -t opp-api-image .
+```
+* Running the Docker Container:
+
+Run the Docker container, exposing port 8000:
+
+```
+docker run -p 8000:8000 opp-api-image
+```
