@@ -8,7 +8,7 @@ from routers.auth import get_current_user
 from models.models import Users
 from db.database import SessionLocal
 
-router = APIRouter(prefix='/admin', tags=['admin'])
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 def get_db():
@@ -25,12 +25,12 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, (Depends(get_current_user))]
 
 
-@router.get("/users",status_code=status.HTTP_200_OK)
+@router.get("/users", status_code=status.HTTP_200_OK)
 async def read_all(user: user_dependency, db: db_dependency):
     check_admin_user_auth(user)
     return db.query(Users).all()
 
 
 def check_admin_user_auth(user):
-    if user is None or user.get('user_role').lower() != 'admin':
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+    if user is None or user.get("user_role").lower() != "admin":
+        raise HTTPException(status_code=401, detail="Authentication Failed")

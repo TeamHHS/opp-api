@@ -1,0 +1,28 @@
+name: Opp CI
+
+on: [push]
+
+jobs:
+  opp-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.5'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          pytest
+      - name: Run pylint on src
+        run: |
+          pylint src
+        continue-on-error: true
+      - name: Run pylint on tests
+        run: |
+          pylint tests
+        continue-on-error: true

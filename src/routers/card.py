@@ -1,38 +1,9 @@
-# Card number for testing
-{
-  "card_type": "debit",
-  "card_number": 4532015112830366,
-  "expiration_month": 12,
-  "expiration_year": 2026,
-  "cvv": 126,
-  "balance": 5
-}
-
-{
-  "card_type": "credit",
-  "card_number": 5555555555554444,
-  "expiration_month": 12,
-  "expiration_year": 2026,
-  "cvv": 126,
-  "balance": 0
-}
-
-{
-  "card_type": "credit",
-  "card_number": 4111111111111111,
-  "expiration_month": 12,
-  "expiration_year": 2022,
-  "cvv": 126,
-  "balance": 0
-}
-
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from routers.auth import get_current_user
 from routers.helpers import check_user_authentication
@@ -42,7 +13,35 @@ from db.database import SessionLocal
 
 from datetime import datetime
 
-router = APIRouter(prefix='/card', tags=['card'])
+# Card number for testing
+{
+    "card_type": "debit",
+    "card_number": 4532015112830366,
+    "expiration_month": 12,
+    "expiration_year": 2026,
+    "cvv": 126,
+    "balance": 5,
+}
+
+{
+    "card_type": "credit",
+    "card_number": 5555555555554444,
+    "expiration_month": 12,
+    "expiration_year": 2026,
+    "cvv": 126,
+    "balance": 0,
+}
+
+{
+    "card_type": "credit",
+    "card_number": 4111111111111111,
+    "expiration_month": 12,
+    "expiration_year": 2022,
+    "cvv": 126,
+    "balance": 0,
+}
+
+router = APIRouter(prefix="/card", tags=["card"])
 
 
 def get_db():
@@ -58,6 +57,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 # when an API uses this, it will enforce authorization
 user_dependency = Annotated[dict, (Depends(get_current_user))]
 
+
 class CardsRequest(BaseModel):
     card_type: str
     card_number: int = Field(gt=999999999999999, lt=10000000000000000)
@@ -66,10 +66,11 @@ class CardsRequest(BaseModel):
     cvv: int = Field(gt=99, lt=1000)
     balance: int
 
+
 @router.get("/read-all")
 async def read_all(user: user_dependency, db: db_dependency):
     check_user_authentication(user)
-    return db.query(Cards).filter(Cards.owner_id == user.get('user_id')).all()
+    return db.query(Cards).filter(Cards.owner_id == user.get("user_id")).all()
 
 
 @router.get("/{card_number}", status_code=status.HTTP_200_OK)
@@ -77,26 +78,38 @@ async def read_card(user: user_dependency, db: db_dependency, card_number: int):
     check_user_authentication(user)
 
     card_model = (
-        db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
+        db.query(Cards)
+        .filter(Cards.card_number == card_number)
+        .filter(Cards.owner_id == user.get("user_id"))
+        .first()
     )
 
     if card_model is not None:
         return card_model
-    raise HTTPException(status_code=404, detail='Card not found')
+    raise HTTPException(status_code=404, detail="Card not found")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_card(user: user_dependency, db: db_dependency, card_request: CardsRequest):
+async def create_card(
+    user: user_dependency, db: db_dependency, card_request: CardsRequest
+):
     # Ensure user authentication
     check_user_authentication(user)
 
     # Check if a card with the same card number already exists
-    existing_card = db.query(Cards).filter(Cards.card_number == card_request.card_number).filter(Cards.owner_id == user.get('user_id')).first()
+    existing_card = (
+        db.query(Cards)
+        .filter(Cards.card_number == card_request.card_number)
+        .filter(Cards.owner_id == user.get("user_id"))
+        .first()
+    )
 
     if existing_card:
-        raise HTTPException(status_code=400, detail="Card with the same number already exists")
+        raise HTTPException(
+            status_code=400, detail="Card with the same number already exists"
+        )
 
-    card_model = Cards(**card_request.model_dump(), owner_id=user.get('user_id'))
+    card_model = Cards(**card_request.model_dump(), owner_id=user.get("user_id"))
 
     if not isValidType(card_model.card_type):
         raise HTTPException(status_code=400, detail="Invalid Card Type")
@@ -108,13 +121,21 @@ async def create_card(user: user_dependency, db: db_dependency, card_request: Ca
 
 
 @router.put("/{card_number}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_card(user: user_dependency, db: db_dependency,
-                      card_request: CardsRequest,
-                      card_number: int):
+async def update_card(
+    user: user_dependency,
+    db: db_dependency,
+    card_request: CardsRequest,
+    card_number: int,
+):
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
+    card_model = (
+        db.query(Cards)
+        .filter(Cards.card_number == card_number)
+        .filter(Cards.owner_id == user.get("user_id"))
+        .first()
+    )
 
     if card_model is None:  # Fix the variable name here
         raise HTTPException(status_code=404, detail="Card not found")
@@ -142,18 +163,27 @@ async def delete_card(user: user_dependency, db: db_dependency, card_number: int
     # Ensure user authentication
     check_user_authentication(user)
 
-    card_model = db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).first()
+    card_model = (
+        db.query(Cards)
+        .filter(Cards.card_number == card_number)
+        .filter(Cards.owner_id == user.get("user_id"))
+        .first()
+    )
 
     if card_model is None:
         raise HTTPException(status_code=404, detail="Card not found")
 
-    db.query(Cards).filter(Cards.card_number == card_number).filter(Cards.owner_id == user.get('user_id')).delete()
+    db.query(Cards).filter(Cards.card_number == card_number).filter(
+        Cards.owner_id == user.get("user_id")
+    ).delete()
 
     db.commit()
 
+
 # Ensure card type is valid
 def isValidType(input):
-    return input.lower() in ('debit', 'credit')
+    return input.lower() in ("debit", "credit")
+
 
 # Ensure card number is valid via Luhn Algorithm
 def isValidNum(num):
@@ -177,6 +207,7 @@ def isValidNum(num):
         double_digit = not double_digit
 
     return total % 10 == 0
+
 
 def isExpired(expiration_month, expiration_year):
     current_month = datetime.now().month

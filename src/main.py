@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 import sys
-sys.path.append('/Users/sbt/Desktop/CS5500/opp-api/src')
 
 from models import models
 from db.database import engine
 from routers import auth, payment, admin, card, transaction
+
+sys.path.append("/Users/sbt/Desktop/CS5500/opp-api/src")
 
 # application
 app = FastAPI()

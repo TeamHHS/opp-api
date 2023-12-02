@@ -1,12 +1,10 @@
 from db.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Enum, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, DateTime
 from sqlalchemy.sql import func
 
 
 class Users(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True)
@@ -18,8 +16,9 @@ class Users(Base):
     role = Column(String)
     phone_number = Column(String)
 
+
 class Cards(Base):
-    __tablename__ = 'cards'
+    __tablename__ = "cards"
 
     card_type = Column(String, nullable=False)
     card_number = Column(Integer, nullable=False, primary_key=True, index=True)
@@ -29,8 +28,9 @@ class Cards(Base):
     balance = Column(Float, default=100)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
+
 class Payments(Base):
-    __tablename__ = 'payments'
+    __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
@@ -40,8 +40,9 @@ class Payments(Base):
     complete = Column(Boolean, nullable=False)
     amount = Column(Float, nullable=False)
 
+
 class Transactions(Base):
-    __tablename__ = 'transactions'
+    __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
