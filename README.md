@@ -26,3 +26,6 @@ Run the Docker container, exposing port 8000:
 ```
 docker run -p 8000:8000 opp-api-image
 ```
+
+## PM4B
+* Public Url: http://ec2-3-90-144-11.compute-1.amazonaws.com:8000/docs
