@@ -12,6 +12,7 @@ from typing import Annotated, Any
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -54,6 +55,10 @@ class Token(BaseModel):
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+    existing_user = db.query(Users).filter(Users.username == create_user_request.username).first()
+    if existing_user:
+        return JSONResponse(content={"message": "Username not available"}, status_code=status.HTTP_400_BAD_REQUEST)
+    
     create_user_model = Users(
         email=create_user_request.email,
         username=create_user_request.username,
@@ -66,6 +71,9 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
 
     db.add(create_user_model)
     db.commit()
+    
+    return JSONResponse(content={"message": "Sign up successful"}, status_code=status.HTTP_201_CREATED)
+
 
 
 @router.post("/token/", response_model=Token)
